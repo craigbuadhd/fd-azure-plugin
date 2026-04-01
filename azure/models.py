@@ -50,9 +50,11 @@ class Tenant(BaseModel):
 
 
 OFFER_TYPES = [
+    "Azure Plan",
     "CSP",
     "Enterprise Agreement",
     "Free Trial",
+    "MCA (Microsoft Customer Agreement)",
     "MSDN / Visual Studio",
     "Pay-As-You-Go",
     "Sponsorship",
