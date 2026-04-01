@@ -1,0 +1,9 @@
+[project]
+name = "fd-azure-plugin"
+version = "0.1.0"
+description = "Azure infrastructure plugin for Friction Dissolved: tenants, subscriptions, resource groups"
+requires-python = ">=3.12"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
