@@ -7,6 +7,7 @@ from fastapi.templating import Jinja2Templates
 from consulting import clients_service as client_service
 from azure import tenants_service as tenant_service
 from azure import subscriptions_service as subscription_service
+from azure import resource_groups_service
 from azure.models import (
     OFFER_TYPES,
     SubscriptionCreate,
@@ -101,10 +102,13 @@ def subscription_detail_page(
     if sub is None:
         raise HTTPException(status_code=404, detail="Subscription not found")
     tenants = tenant_service.list_tenants(client_slug)
+    rgs = [rg for rg in resource_groups_service.list_resource_groups(client_slug) if rg.subscription_id == sid]
+    parent_tenant = next((t for t in tenants if t.id == sub.tenant_id), None)
     return _render(
         "subscriptions/form.html", request,
         client=client, subscription=sub, error=None,
         tenants=tenants, offer_types=OFFER_TYPES,
+        child_resource_groups=rgs, parent_tenant=parent_tenant,
     )
 
 

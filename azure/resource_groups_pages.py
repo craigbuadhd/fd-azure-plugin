@@ -11,7 +11,7 @@ from azure.models import (
     ResourceGroupCreate,
     ResourceGroupUpdate,
 )
-from friction_dissolved.core.azure_regions import AZURE_REGIONS
+from friction_dissolved.core.azure_regions import AZURE_REGIONS_GROUPED
 
 from friction_dissolved.core.templates import TEMPLATES_DIR as _TEMPLATES_DIR
 router = APIRouter(tags=["pages"])
@@ -25,7 +25,7 @@ def _render(name: str, request: Request, **context: object) -> HTMLResponse:
 def _rg_form_context(client_slug: str) -> dict:
     return {
         "subscriptions": subscription_service.list_subscriptions(client_slug),
-        "regions": AZURE_REGIONS,
+        "regions_grouped": AZURE_REGIONS_GROUPED,
     }
 
 
@@ -105,10 +105,12 @@ def resource_group_detail_page(
     rg = resource_group_service.get_resource_group(client_slug, rg_id)
     if rg is None:
         raise HTTPException(status_code=404, detail="Resource group not found")
+    ctx = _rg_form_context(client_slug)
+    parent_sub = next((s for s in ctx["subscriptions"] if s.id == rg.subscription_id), None)
     return _render(
         "resource_groups/form.html", request,
-        client=client, rg=rg, error=None,
-        **_rg_form_context(client_slug),
+        client=client, rg=rg, error=None, parent_subscription=parent_sub,
+        **ctx,
     )
 
 

@@ -6,6 +6,7 @@ from fastapi.templating import Jinja2Templates
 
 from consulting import clients_service as client_service
 from azure import tenants_service as tenant_service
+from azure import subscriptions_service as subscription_service
 from azure.models import TenantCreate, TenantUpdate
 
 from friction_dissolved.core.templates import TEMPLATES_DIR as _TEMPLATES_DIR
@@ -23,7 +24,14 @@ def tenant_list_page(request: Request, client_slug: str, success: str = "") -> H
     if client is None:
         raise HTTPException(status_code=404, detail="Client not found")
     tenants = tenant_service.list_tenants(client_slug)
-    return _render("tenants/list.html", request, client=client, tenants=tenants, success=success)
+    subs = subscription_service.list_subscriptions(client_slug)
+    sub_counts = {}
+    for s in subs:
+        sub_counts[s.tenant_id] = sub_counts.get(s.tenant_id, 0) + 1
+    return _render(
+        "tenants/list.html", request,
+        client=client, tenants=tenants, sub_counts=sub_counts, success=success,
+    )
 
 
 @router.get("/clients/{client_slug}/tenants/new", response_class=HTMLResponse)
@@ -77,7 +85,11 @@ def tenant_detail_page(request: Request, client_slug: str, tid: int) -> HTMLResp
     tenant = tenant_service.get_tenant(client_slug, tid)
     if tenant is None:
         raise HTTPException(status_code=404, detail="Tenant not found")
-    return _render("tenants/form.html", request, client=client, tenant=tenant, error=None)
+    subs = [s for s in subscription_service.list_subscriptions(client_slug) if s.tenant_id == tid]
+    return _render(
+        "tenants/form.html", request,
+        client=client, tenant=tenant, error=None, child_subscriptions=subs,
+    )
 
 
 @router.post("/clients/{client_slug}/tenants/{tid}", response_model=None)
